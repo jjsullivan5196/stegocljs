@@ -3,7 +3,7 @@
                 "src/main"
                 "src/test"]
 
- :dependencies [[lilactown/hx "0.5.3"]
+ :dependencies [[lilactown/helix "0.0.6"]
                 [org.clojure/math.numeric-tower "0.0.4"]]
 
  :dev-http {8080 "public/"}
