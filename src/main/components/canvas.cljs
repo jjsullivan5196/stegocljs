@@ -2,20 +2,22 @@
   "Canvas-related react components."
   (:require [util.core :refer [use-ref!]]
             [util.canvas :as cn]
-            [reagent.core :as rg]))
+            [hx.react :as hx :refer [defnc]]
+            [hx.hooks :as hooks]))
 
-(defn CanvasTransform
-  "Get image from `url`, apply `transform` to the RGBA pixels and display the result."
+(defnc CanvasTransform
   [{:keys [transform url]}]
-  (let [!canvas (atom nil)
-        !data   (rg/atom nil)
-        cref    (comp
-                  (partial cn/open-image! url (use-ref! !data))
-                  cn/make-ref)]
+  (let [!cref (hooks/useIRef nil)
+        [data set-data] (hooks/useState nil)]
 
-    (fn []
-      (when-let [dat @!data] (cn/transform-canvas! transform dat @!canvas))
+    (hooks/useEffect
+      #(cn/open-image! url set-data @!cref)
+      [url])
 
-      [:div
-       [:canvas
-        {:ref (use-ref! !canvas cref)}]])))
+    (hooks/useEffect
+      (fn []
+        (when data
+          (cn/transform-canvas! transform data @!cref)))
+      [transform data])
+
+    [:div [:canvas {:ref (use-ref! cn/make-ref !cref)}]]))

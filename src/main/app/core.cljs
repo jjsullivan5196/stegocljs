@@ -1,15 +1,17 @@
 (ns app.core
-  (:require [reagent.core :as rg]
-            [components.canvas :refer [CanvasTransform]]))
+  (:require [components.canvas :refer [CanvasTransform]]
+            [hx.react :as hx :refer [defnc]]
+            ["react-dom" :as react-dom]))
 
-(defn ui
+(defnc ui
   [] 
   [CanvasTransform {:transform (partial map (fn [[r g b a]] [g r b a]))
                     :url "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png"}])
 
 (defn render
   []
-  (rg/render [ui] (.getElementById js/document "app")))
+  (react-dom/render (hx/f [ui])
+                    (.getElementById js/document "app")))
 
 (defn init
   []

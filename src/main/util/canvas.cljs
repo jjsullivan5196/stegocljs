@@ -35,7 +35,8 @@
   [transform data canvas]
   (let [{:keys [ctx scratch data-seq scratch-buffer]} (merge canvas data)]
     (-> data-seq (transform) (copy-rgba! scratch-buffer))
-    (.putImageData ctx scratch 0 0)))
+    (.putImageData ctx scratch 0 0))
+  nil)
 
 (defn draw-image!
   "Draw image `img` into `canvas`."
@@ -60,4 +61,4 @@
                             (draw-image! canvas)
                             (get-data)
                             (loaded)))))
-  canvas)
+  nil)
