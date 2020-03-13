@@ -1,66 +1,15 @@
 (ns util.image
-  "Specific functions for image data"
-  (:require [clojure.core.async :as a]))
-
-(def pixel-stride
-  "Byte length of RGBA canvas pixel" 4)
-
-(defrecord Pixels [width height pixels])
-
-(def image-like
-  "Types that fulfill the javascript `CanvasImageSource` pseudointerface."
-  (-> (make-hierarchy)
-      (derive js/Image ::image-like)
-      (derive js/ImageBitmap ::image-like)))
+  "Specific functions for image data."
+  (:require [util.canvas :as cn]
+            [clojure.core.async :as a]))
 
 (defmulti ->ImageData
   "Create `ImageData` from some object."
-  type :hierarchy #'image-like)
-
-(defmethod ->ImageData js/ImageData
-  [data] data)
-
-(defmethod ->ImageData :default
-  [_] nil)
-
-(defmethod ->ImageData ::image-like
-  [img]
-  (let [width (.-width img)
-        height (.-height img)
-        context (.. (js/OffscreenCanvas. width height)
-                    (getContext "2d"))]
-    (.drawImage context img 0 0)
-    (.getImageData context 0 0 width height)))
-
-(defmethod ->ImageData Pixels
-  [data]
-  (let [{:keys [width height pixels]} data
-        arr (-> pixels (flatten) (js/Uint8ClampedArray.from))]
-    (js/ImageData. arr width height)))
+  type :hierarchy #'cn/image-traits)
 
 (defmulti ->PixelData
-  "Convert some object to a `Pixels` record"
-  type :hierarchy #'image-like)
-
-(defmethod ->PixelData Pixels
-  [data] data)
-
-(defmethod ->PixelData :default
-  [_] nil)
-
-(defmethod ->PixelData ::image-like
-  [img]
-  (-> img (->ImageData) (->PixelData)))
-
-(defmethod ->PixelData js/ImageData
-  [data]
-  (let [pixels (->> (.-data data)
-                    (array-seq)
-                    (partition pixel-stride))]
-    (map->Pixels
-      {:width (.-width data)
-       :height (.-height data)
-       :pixels pixels})))
+  "Convert some object to a `Pixels` record."
+  type :hierarchy #'cn/image-traits)
 
 (defn new-bitmap
   "Returns a channel that delivers an `ImageBitmap` object created from some
@@ -77,3 +26,34 @@
   "Get `PixelData` record for some image-containing `data`."
   [data]
   (new-bitmap data (map ->PixelData)))
+
+(def pixel-stride
+  "Byte length of RGBA canvas pixel" 4)
+
+(defrecord Pixels [width height pixels])
+
+(defmethod ->ImageData :default [_] nil)
+
+(defmethod ->ImageData js/ImageData [data] data)
+
+(defmethod ->ImageData :util.canvas/image-like
+  [img] (cn/drawing-data img))
+
+(defmethod ->ImageData Pixels
+  [data]
+  (let [{:keys [width height pixels]} data
+        arr (-> pixels (flatten) (js/Uint8ClampedArray.from))]
+    (js/ImageData. arr width height)))
+
+(defmethod ->PixelData :default [_] nil)
+
+(defmethod ->PixelData Pixels [data] data)
+
+(defmethod ->PixelData :util.canvas/image-like
+  [img] (-> img (->ImageData) (->PixelData)))
+
+(defmethod ->PixelData js/ImageData
+  [data]
+  (let [pixels (->> (.-data data) (array-seq) (partition pixel-stride))]
+    (map->Pixels
+      (assoc (cn/dimensions data) :pixels pixels))))

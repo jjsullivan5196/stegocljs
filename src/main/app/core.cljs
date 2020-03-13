@@ -1,9 +1,8 @@
 (ns app.core
-  (:require [components.canvas :refer [WrapBitmap]]
+  (:require [components.canvas :refer [CanvasTransform]]
+            [components.util :as cm]
             [util.core :as c]
-            [clojure.core.async :as a]
             [helix.core :refer [defnc $]]
-            [helix.hooks :as hooks]
             [helix.dom :as d]
             ["react-dom" :as react-dom]))
 
@@ -11,13 +10,11 @@
 
 (defnc ui
   []
-  (let [[blob set-blob] (hooks/use-state nil)]
-    (hooks/use-effect
-      :once (a/take! (c/fetch-blob! img-url) set-blob))
-    (if blob
-      ($ WrapBitmap {:transform (fn [[r g b a]] [g r b a])
-                     :img-source blob})
-      (d/div))))
+  (d/div
+    (when-let [blob (cm/use-thunk c/fetch-blob! img-url)]
+      ($ CanvasTransform
+         {:transform (partial map (fn [[r g b a]] [g r b a]))
+          :img-source blob}))))
 
 (defn render
   []
