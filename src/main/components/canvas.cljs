@@ -14,7 +14,7 @@
     (let [img (cm/use-thunk im/load-pixels! img-source)
           canvas-ref (hooks/use-ref nil)]
       (when img
-        (let [data (-> (update img :pixels transform) (im/->ImageData))]
+        (let [data (update img :pixels transform)]
           (when-let [canvas @canvas-ref] (cn/draw! canvas data))
           (d/canvas
             {:ref

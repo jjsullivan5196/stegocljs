@@ -16,14 +16,9 @@
   "Get dimensions of some image data."
   type :hierarchy #'image-traits)
 
-(defmulti draw!
-  "Draw something on a canvas."
-  (fn [_ img] (type img)) :hierarchy #'image-traits)
-
-(defn get-context
-  "Shortcut for 2d drawing context."
-  [canvas]
-  (.getContext canvas "2d"))
+(defmulti put-data!
+  "Put something on a canvas."
+  (fn [_ data] (type data)) :hierarchy #'image-traits)
 
 (defn set-dimensions!
   "Set canvas dimensions."
@@ -31,19 +26,21 @@
   (set! (.-width canvas) width)
   (set! (.-height canvas) height))
 
-(defn draw-setup!
-  "Set canvas dimensions and return it's 2d drawing context."
+(defn draw!
+  "Draw `img` onto `canvas`. Return 2d drawing context."
   [canvas img]
   (set-dimensions! canvas (dimensions img))
-  (get-context canvas))
+  (let [context (.getContext canvas "2d")]
+    (put-data! context img)
+    context))
 
 (defn drawing-data
   "Create a drawing with a temporary canvas. Return result image data."
   [img]
   (let [{:keys [width height]} (dimensions img)
         canvas (js/OffscreenCanvas. width height)]
-    (draw! canvas img)
-    (.getImageData (get-context canvas) 0 0 width height)))
+    (.. (draw! canvas img)
+        (getImageData 0 0 width height))))
 
 (defmethod dimensions :default [_] nil)
 
@@ -52,14 +49,12 @@
   {:width (.-width img)
    :height (.-height img)})
 
-(defmethod draw! :default [_ _] nil)
+(defmethod put-data! :default [_ _] nil)
 
-(defmethod draw! ::image-like
+(defmethod put-data! ::image-like
   [canvas img]
-  (-> (draw-setup! canvas img)
-      (.drawImage img 0 0)))
+  (.drawImage canvas img 0 0))
 
-(defmethod draw! js/ImageData
+(defmethod put-data! js/ImageData
   [canvas data]
-  (-> (draw-setup! canvas data)
-      (.putImageData data 0 0)))
+  (.putImageData canvas data 0 0))

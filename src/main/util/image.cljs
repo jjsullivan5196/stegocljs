@@ -3,13 +3,23 @@
   (:require [util.canvas :as cn]
             [clojure.core.async :as a]))
 
-(defmulti ->ImageData
-  "Create `ImageData` from some object."
-  type :hierarchy #'cn/image-traits)
+(defrecord Pixels [width height pixels])
 
 (defmulti ->PixelData
   "Convert some object to a `Pixels` record."
   type :hierarchy #'cn/image-traits)
+
+(defmulti ->ImageData
+  "Create `ImageData` from some object."
+  type :hierarchy #'cn/image-traits)
+
+(defmethod util.canvas/dimensions Pixels
+  [data]
+  (dissoc data :pixels))
+
+(defmethod util.canvas/put-data! Pixels
+  [canvas data]
+  (->> data (->ImageData) (cn/put-data! canvas)))
 
 (defn new-bitmap
   "Returns a channel that delivers an `ImageBitmap` object created from some
@@ -30,7 +40,18 @@
 (def pixel-stride
   "Byte length of RGBA canvas pixel" 4)
 
-(defrecord Pixels [width height pixels])
+(defmethod ->PixelData :default [_] nil)
+
+(defmethod ->PixelData Pixels [data] data)
+
+(defmethod ->PixelData :util.canvas/image-like
+  [img] (-> img (->ImageData) (->PixelData)))
+
+(defmethod ->PixelData js/ImageData
+  [data]
+  (let [pixels (->> (.-data data) (array-seq) (partition pixel-stride))]
+    (map->Pixels
+      (assoc (cn/dimensions data) :pixels pixels))))
 
 (defmethod ->ImageData :default [_] nil)
 
@@ -44,16 +65,3 @@
   (let [{:keys [width height pixels]} data
         arr (-> pixels (flatten) (js/Uint8ClampedArray.from))]
     (js/ImageData. arr width height)))
-
-(defmethod ->PixelData :default [_] nil)
-
-(defmethod ->PixelData Pixels [data] data)
-
-(defmethod ->PixelData :util.canvas/image-like
-  [img] (-> img (->ImageData) (->PixelData)))
-
-(defmethod ->PixelData js/ImageData
-  [data]
-  (let [pixels (->> (.-data data) (array-seq) (partition pixel-stride))]
-    (map->Pixels
-      (assoc (cn/dimensions data) :pixels pixels))))
