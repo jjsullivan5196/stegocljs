@@ -3,7 +3,9 @@
                 "src/main"
                 "src/test"]
 
- :dependencies [[lilactown/helix "0.0.6"]
+ :dependencies [[org.clojure/core.async "1.0.567"]
+                [lilactown/helix "0.0.9"]
+                [cljs-http "0.1.46"]
                 [org.clojure/math.numeric-tower "0.0.4"]]
 
  :dev-http {8080 "public/"}

@@ -1,8 +1,12 @@
 (ns util.core
-  "Generic utilities.")
+  "Generic utilities."
+  (:require [cljs-http.client :as http]
+            [clojure.core.async :as a :refer [go <! >! chan promise-chan]]))
 
-(defn use-ref!
-  "Create a function that swaps in a component reference into atom `!at`. Optionally provide `mkref` to change the reference before storing it."
-  ([!at] (use-ref! !at identity))
-  ([mkref !at] (fn [el] (when el
-                          (->> el (mkref) (reset! !at))))))
+(defn fetch-blob!
+  "Get some `url` as a blob object."
+  [url]
+  (http/get
+    url {:response-type :blob
+         :with-credentials? false
+         :channel (promise-chan (map :body))}))
