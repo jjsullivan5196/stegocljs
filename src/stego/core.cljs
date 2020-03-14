@@ -1,7 +1,5 @@
 (ns stego.core
-  (:require [stego.protocols.impl.canvas]
-            [stego.protocols.impl.image]
-            [stego.components.canvas :refer [CanvasTransform]]
+  (:require [stego.components.canvas :refer [CanvasTransform]]
             [stego.components.util :as cm]
             [stego.util :as u]
             [helix.core :refer [defnc $]]
