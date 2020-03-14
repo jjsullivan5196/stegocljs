@@ -1,7 +1,9 @@
-(ns app.core
-  (:require [components.canvas :refer [CanvasTransform]]
-            [components.util :as cm]
-            [util.core :as c]
+(ns stego.core
+  (:require [stego.protocols.impl.canvas]
+            [stego.protocols.impl.image]
+            [stego.components.canvas :refer [CanvasTransform]]
+            [stego.components.util :as cm]
+            [stego.util :as u]
             [helix.core :refer [defnc $]]
             [helix.dom :as d]
             ["react-dom" :as react-dom]))
@@ -11,7 +13,7 @@
 (defnc ui
   []
   (d/div
-    (when-let [blob (cm/use-thunk c/fetch-blob! img-url)]
+    (when-let [blob (cm/use-thunk u/fetch-blob! img-url)]
       ($ CanvasTransform
          {:transform (partial map (fn [[r g b a]] [g r b a]))
           :img-source blob}))))

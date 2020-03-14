@@ -1,4 +1,4 @@
-(ns components.util
+(ns stego.components.util
   "Component utilities."
   (:require [helix.core :refer [defnc defhook $]]
             [helix.hooks :as hooks]

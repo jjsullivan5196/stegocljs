@@ -1,4 +1,4 @@
-(ns util.core)
+(ns stego.util)
 
 (defmacro extend-types
   "Pass `specs` to `extend-type` applied to `types`."

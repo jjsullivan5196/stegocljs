@@ -1,4 +1,4 @@
-(ns util.stego
+(ns stego.stenography
   "The fun file-hiding stuff."
   (:require [clojure.math.numeric-tower :as math]))
 
@@ -37,6 +37,3 @@
     {:split [(-> data (bit-shift-right 4) (bit-or (clear-insig r)))
              smask
              (-> data (bit-and 2r00001111) (bit-or (clear-insig b)))]}))
-
-
-

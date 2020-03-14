@@ -1,8 +1,7 @@
-(ns components.canvas
+(ns stego.components.canvas
   "Canvas-related react components."
-  (:require [components.util :as cm]
-            [util.canvas :as cn]
-            [util.image :as im]
+  (:require [stego.components.util :as cm]
+            [stego.canvas.core :as cn]
             [helix.core :refer [defnc $]]
             [helix.hooks :as hooks]
             [helix.dom :as d]))
@@ -11,7 +10,7 @@
   "Get image from `img`, apply `transform` to the RGBA pixels and display the result."
   [{:keys [transform img-source]}]
   (d/div
-    (let [img (cm/use-thunk im/load-pixels! img-source)
+    (let [img (cm/use-thunk cn/load-pixels! img-source)
           canvas-ref (hooks/use-ref nil)]
       (when img
         (let [data (update img :pixels transform)]
