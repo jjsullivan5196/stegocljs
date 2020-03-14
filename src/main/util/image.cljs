@@ -1,25 +1,14 @@
 (ns util.image
   "Specific functions for image data."
   (:require [util.canvas :as cn]
+            [util.core :as c]
             [clojure.core.async :as a]))
 
-(defrecord Pixels [width height pixels])
+(defprotocol ToPixels
+  (->PixelData [data] "Convert some object to a `Pixels` record."))
 
-(defmulti ->PixelData
-  "Convert some object to a `Pixels` record."
-  type :hierarchy #'cn/image-traits)
-
-(defmulti ->ImageData
-  "Create `ImageData` from some object."
-  type :hierarchy #'cn/image-traits)
-
-(defmethod util.canvas/dimensions Pixels
-  [data]
-  (dissoc data :pixels))
-
-(defmethod util.canvas/put-data! Pixels
-  [canvas data]
-  (->> data (->ImageData) (cn/put-data! canvas)))
+(defprotocol ToImageData
+  (->ImageData [data] "Create `ImageData` from some object."))
 
 (defn new-bitmap
   "Returns a channel that delivers an `ImageBitmap` object created from some
@@ -37,31 +26,38 @@
   [data]
   (new-bitmap data (map ->PixelData)))
 
+(defrecord Pixels [width height pixels]
+  cn/Drawable
+  (dimensions [self]
+    (dissoc self :pixels))
+  (put-data! [self context]
+    (-> self (->ImageData) (cn/put-data! context)))
+
+  ToPixels
+  (->PixelData [self] self)
+
+  ToImageData
+  (->ImageData [self]
+    (let [arr (-> pixels (flatten) (js/Uint8ClampedArray.from))]
+      (js/ImageData. arr width height))))
+
 (def pixel-stride
   "Byte length of RGBA canvas pixel" 4)
 
-(defmethod ->PixelData :default [_] nil)
+(extend-type js/ImageData
+  ToImageData
+  (->ImageData [self] self)
 
-(defmethod ->PixelData Pixels [data] data)
+  ToPixels
+  (->PixelData [self]
+    (let [pixels (->> (.-data self) (array-seq) (partition pixel-stride))
+          dims (cn/dimensions self)]
+      (map->Pixels (assoc dims :pixels pixels)))))
 
-(defmethod ->PixelData :util.canvas/image-like
-  [img] (-> img (->ImageData) (->PixelData)))
+(c/extend-types
+  cn/image-types
+  ToImageData
+  (->ImageData [self] (cn/drawing-data self))
 
-(defmethod ->PixelData js/ImageData
-  [data]
-  (let [pixels (->> (.-data data) (array-seq) (partition pixel-stride))]
-    (map->Pixels
-      (assoc (cn/dimensions data) :pixels pixels))))
-
-(defmethod ->ImageData :default [_] nil)
-
-(defmethod ->ImageData js/ImageData [data] data)
-
-(defmethod ->ImageData :util.canvas/image-like
-  [img] (cn/drawing-data img))
-
-(defmethod ->ImageData Pixels
-  [data]
-  (let [{:keys [width height pixels]} data
-        arr (-> pixels (flatten) (js/Uint8ClampedArray.from))]
-    (js/ImageData. arr width height)))
+  ToPixels
+  (->PixelData [self] (-> self (->ImageData) (->PixelData))))

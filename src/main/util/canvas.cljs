@@ -1,24 +1,10 @@
 (ns util.canvas
-  "Methods for working directly with the Canvas API.")
+  "Methods for working directly with the Canvas API."
+  (:require [util.core :as c]))
 
-(def image-traits
-  "Attributes associated with image-like objects."
-  (-> (make-hierarchy)
-      ;; Objects which satify the `CanvasImageSource` pseudointerface
-      (derive js/Image ::image-like)
-      (derive js/ImageBitmap ::image-like)
-
-      ;; Things with dimensions
-      (derive ::image-like ::with-dims)
-      (derive js/ImageData ::with-dims)))
-
-(defmulti dimensions
-  "Get dimensions of some image data."
-  type :hierarchy #'image-traits)
-
-(defmulti put-data!
-  "Put something on a canvas."
-  (fn [_ data] (type data)) :hierarchy #'image-traits)
+(defprotocol Drawable
+  (dimensions [data] "Get dimensions of drawable object.")
+  (put-data! [data context] "Put object onto canvas."))
 
 (defn set-dimensions!
   "Set canvas dimensions."
@@ -31,7 +17,7 @@
   [canvas img]
   (set-dimensions! canvas (dimensions img))
   (let [context (.getContext canvas "2d")]
-    (put-data! context img)
+    (put-data! img context)
     context))
 
 (defn drawing-data
@@ -42,19 +28,24 @@
     (.. (draw! canvas img)
         (getImageData 0 0 width height))))
 
-(defmethod dimensions :default [_] nil)
+(def image-types [js/Image js/ImageBitmap])
 
-(defmethod dimensions ::with-dims
+(defn image-dimensions
   [img]
   {:width (.-width img)
    :height (.-height img)})
 
-(defmethod put-data! :default [_ _] nil)
+(extend-type js/ImageData
+  Drawable
+  (dimensions [self] (image-dimensions self))
+  (put-data! [self context]
+    (.putImageData context self 0 0)))
 
-(defmethod put-data! ::image-like
-  [canvas img]
-  (.drawImage canvas img 0 0))
+(c/extend-types
+  image-types
 
-(defmethod put-data! js/ImageData
-  [canvas data]
-  (.putImageData canvas data 0 0))
+  Drawable
+  (dimensions [self] (image-dimensions self))
+  (put-data!
+    [self canvas]
+    (.drawImage canvas self 0 0)))
