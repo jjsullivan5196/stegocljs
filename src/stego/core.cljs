@@ -6,7 +6,8 @@
             [helix.dom :as d]
             ["react-dom" :as react-dom]))
 
-(def img-url "https://upload.wikimedia.org/wikipedia/commons/a/af/Tux.png")
+(def img-url
+  "https://upload.wikimedia.org/wikipedia/commons/8/83/Con_%C4%91%C6%B0%E1%BB%9Dng_h%E1%BA%A1nh_ph%C3%BAc.jpg")
 
 (defnc ui
   []
