@@ -1,0 +1,14 @@
+{:paths ["src" "test"]
+ :deps
+ {org.clojure/clojurescript {:mvn/version "1.10.597"}
+  org.clojure/core.async {:mvn/version "1.0.567"}
+  org.clojure/math.numeric-tower {:mvn/version "0.0.4"}
+  lilactown/helix {:mvn/version "0.0.9"}
+  cljs-http {:mvn/version "0.1.46"}
+  iglu {:local/root "checkouts/iglu/"}}
+ :aliases
+ {:shadow-cljs
+  {:extra-deps {thheller/shadow-cljs {:mvn/version "2.8.93"}
+                cider/cider-nrepl {:mvn/version "0.23.0"}}
+   :extra-paths ["dev"]
+   :main-opts ["-m" "shadow.cljs.devtools.cli"]}}}

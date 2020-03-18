@@ -7,5 +7,6 @@ stdenv.mkDerivation {
     nodejs
     yarn
     adoptopenjdk-openj9-bin-11
+    clojure
   ];
 }
